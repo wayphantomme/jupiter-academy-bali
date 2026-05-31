@@ -31,6 +31,15 @@ export function PriceTicker({ apiKey }: { apiKey: string }) {
 
           return (
             <div key={token.address} className="flex items-center gap-1.5">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={token.logoURI}
+                alt={token.symbol}
+                className="w-3.5 h-3.5 rounded-none bg-neutral-950 border border-neutral-900"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png";
+                }}
+              />
               <span className="text-neutral-300 font-bold">{token.symbol}</span>
               <span className="text-white font-medium">
                 {price !== undefined
