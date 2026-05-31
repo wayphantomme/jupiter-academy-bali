@@ -72,7 +72,10 @@ export default function Home() {
   }, [amount]);
 
   // Convert amount to raw string
-  const rawAmountString = getRawAmountString(debouncedAmount, tokenIn.decimals);
+  const rawAmountString = getRawAmountString(
+    debouncedAmount,
+    swapMode === "ExactIn" ? tokenIn.decimals : tokenOut.decimals
+  );
 
   // Quote Fetching hook
   const { quote, order, error, isLoading } = useQuote({

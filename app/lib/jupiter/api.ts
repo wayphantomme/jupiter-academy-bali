@@ -87,35 +87,37 @@ export async function fetchQuote(
     const inDec = inputToken.decimals;
     const outDec = outputToken.decimals;
 
-    // Convert raw amount to standard decimals
-    const rawInAmount = BigInt(params.amount);
-    const floatInAmount = Number(rawInAmount) / Math.pow(10, inDec);
+    // Convert raw amount to standard float based on the swap mode
+    const rawAmount = BigInt(params.amount);
+    const isExactIn = params.swapMode === "ExactIn";
+    const floatAmount = Number(rawAmount) / Math.pow(10, isExactIn ? inDec : outDec);
 
+    let floatInAmount = 0;
     let floatOutAmount = 0;
-    if (params.swapMode === "ExactIn") {
+
+    if (isExactIn) {
+      floatInAmount = floatAmount;
       floatOutAmount = (floatInAmount * priceIn) / priceOut;
     } else {
-      // In ExactOut, params.amount is the output amount requested
-      floatOutAmount = floatInAmount; // requested output
+      floatOutAmount = floatAmount;
+      floatInAmount = (floatOutAmount * priceOut) / priceIn;
     }
 
+    // Expected raw values (before slippage)
+    const rawInExpected = BigInt(Math.floor(floatInAmount * Math.pow(10, inDec)));
+    const rawOutExpected = BigInt(Math.floor(floatOutAmount * Math.pow(10, outDec)));
+
+    // Slippage boundaries
     const slippageMultiplier = 1 - params.slippageBps / 10000;
-    const finalOutAmount = floatOutAmount * (params.swapMode === "ExactIn" ? slippageMultiplier : 1);
-    const finalInAmount = params.swapMode === "ExactIn" ? floatInAmount : (floatOutAmount * priceOut) / priceIn / slippageMultiplier;
-
-    const rawOutAmount = BigInt(Math.floor(finalOutAmount * Math.pow(10, outDec)));
-    const rawInAmountCalculated = BigInt(Math.floor(finalInAmount * Math.pow(10, inDec)));
-
-    const otherThreshold = params.swapMode === "ExactIn"
-      ? (rawOutAmount * BigInt(Math.max(0, 10000 - params.slippageBps))) / 10000n
-      : (rawInAmountCalculated * BigInt(10000 + params.slippageBps)) / 10000n;
+    const rawMinOut = BigInt(Math.floor(floatOutAmount * slippageMultiplier * Math.pow(10, outDec)));
+    const rawMaxIn = BigInt(Math.floor((floatInAmount / slippageMultiplier) * Math.pow(10, inDec)));
 
     return {
       inputMint: params.inputMint,
-      inAmount: (params.swapMode === "ExactIn" ? rawInAmount : rawInAmountCalculated).toString(),
+      inAmount: (isExactIn ? rawAmount : rawInExpected).toString(),
       outputMint: params.outputMint,
-      outAmount: (params.swapMode === "ExactIn" ? rawOutAmount : rawInAmount).toString(),
-      otherAmountThreshold: otherThreshold.toString(),
+      outAmount: (isExactIn ? rawOutExpected : rawAmount).toString(),
+      otherAmountThreshold: (isExactIn ? rawMinOut : rawMaxIn).toString(),
       swapMode: params.swapMode,
       slippageBps: params.slippageBps,
       priceImpactPct: (0.01 + Math.random() * 0.15).toFixed(4),
@@ -126,9 +128,9 @@ export async function fetchQuote(
             label: "Orca V2",
             inputMint: params.inputMint,
             outputMint: params.outputMint,
-            inAmount: params.amount,
-            outAmount: rawOutAmount.toString(),
-            feeAmount: Math.floor(Number(rawInAmount) * 0.003).toString(),
+            inAmount: (isExactIn ? rawAmount : rawInExpected).toString(),
+            outAmount: (isExactIn ? rawOutExpected : rawAmount).toString(),
+            feeAmount: Math.floor(Number(isExactIn ? rawAmount : rawInExpected) * 0.003).toString(),
             feeMint: params.inputMint,
           },
           percent: 100,
