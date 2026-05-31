@@ -9,10 +9,12 @@ interface TerminalLogProps {
 }
 
 export function TerminalLog({ logs, onClear }: TerminalLogProps) {
-  const terminalEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    terminalEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+    }
   }, [logs]);
 
   const copyToClipboard = () => {
@@ -64,7 +66,10 @@ export function TerminalLog({ logs, onClear }: TerminalLogProps) {
         </div>
       </div>
 
-      <div className="p-4 h-[180px] overflow-y-auto flex flex-col gap-1.5 select-text selection:bg-white selection:text-black">
+      <div
+        ref={scrollContainerRef}
+        className="p-4 h-[180px] overflow-y-auto flex flex-col gap-1.5 select-text selection:bg-white selection:text-black"
+      >
         {logs.length === 0 ? (
           <div className="text-neutral-600 italic select-none">
             &gt; Console idle. Perform a quote or swap execution to see logs...
@@ -78,7 +83,6 @@ export function TerminalLog({ logs, onClear }: TerminalLogProps) {
             </div>
           ))
         )}
-        <div ref={terminalEndRef} />
       </div>
     </div>
   );
