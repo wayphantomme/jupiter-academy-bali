@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Solana dApp Starter",
-  description: "A minimal Next.js starter powered by @solana/kit",
+  title: "Jupiter API Power-Playground",
+  description: "Developer-centric playground demonstrating Jupiter Swap and Price APIs, optimized for Jupiter Bali Academy.",
   icons: {
     icon: "/icon.svg",
     shortcut: "/icon.svg",
